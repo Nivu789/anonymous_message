@@ -30,6 +30,8 @@ export async function POST(request:Request){
             password
         })
 
+        console.log("User created")
+
     } catch (error) {
         console.log("Error registering user")  
         return Response.json({
