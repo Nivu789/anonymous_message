@@ -1,6 +1,8 @@
+import  generateOtp  from "@/helpers/generateOtp";
 import sendVerificationEmail from "@/helpers/sendVerificationEmail";
 import dbConnect from "@/lib/dbConnect";
 import User from "@/models/userModel";
+import bcrypt from 'bcryptjs';
 
 
 export async function POST(request:Request){
@@ -9,6 +11,9 @@ export async function POST(request:Request){
     try {
         const {email,username,password} = await request.json()
         const userExist = await User.findOne({email})
+
+        //user exist and user is verified - cannot create account with this credentials
+
         if(userExist && userExist.isVerified){
             return Response.json({
                 success:false,
@@ -16,21 +21,49 @@ export async function POST(request:Request){
             })
         }
 
+        const verifyCode = await generateOtp()
+
+        const hashedPassword = bcrypt.hash(password,10)
+
+        const expiryDate = new Date()
+        expiryDate.setHours(expiryDate.getHours()+1)
+
+        //user exist and user is not verified - create account with this credentials and update verification code
+
         if(userExist && !userExist.isVerified){
-            await User.findOneAndUpdate({email:email},{$set:{username:username,password:password}})
-            return Response.json({
-                success:true,
-                message:"Created account successfully"
-            })
+            await User.findOneAndUpdate({email},{$set:{username,password:hashedPassword,verifyCode,verifyCodeExpiry:expiryDate}})
+            const verifyEmail = await sendVerificationEmail(email,username,verifyCode)
+            
+            if(verifyEmail.success){
+                return Response.json({
+                    success:true,
+                    message:"Verification email send - verify account"
+                })
+            }
+        
         }
 
-        await User.create({
-            email,
-            username,
-            password
-        })
+        //user does not exist - can create account
 
-        console.log("User created")
+        if(!userExist){
+            await User.create({
+                email,
+                username,
+                password:hashedPassword,
+                verifyCode,
+                verifyCodeExpiry:expiryDate
+            })
+
+            const verifyEmail = await sendVerificationEmail(email,username,verifyCode)
+            
+            if(verifyEmail.success){
+                return Response.json({
+                    success:true,
+                    message:"Verification email send - verify account"
+                })
+            }
+        }
+
 
     } catch (error) {
         console.log("Error registering user")  
