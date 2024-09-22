@@ -1,5 +1,6 @@
 import mongoose , {Schema ,Document} from "mongoose";
 
+
 export interface Message {
     content:string
     createdAt:Date
@@ -60,6 +61,6 @@ const userSchema:Schema<User> = new Schema({
     messages:[messageSchema]
 })
 
-const User = mongoose.models.User as mongoose.Model<User> || mongoose.model("user",userSchema)
+const User = mongoose.models.User as mongoose.Model<User> || mongoose.model<User>("User",userSchema)
 
 export default User;

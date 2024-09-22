@@ -12,6 +12,7 @@ export async function POST(request:Request){
         const {email,username,password} = await request.json()
         const userExist = await User.findOne({email})
 
+
         //user exist and user is verified - cannot create account with this credentials
 
         if(userExist && userExist.isVerified){
@@ -23,7 +24,7 @@ export async function POST(request:Request){
 
         const verifyCode = await generateOtp()
 
-        const hashedPassword = bcrypt.hash(password,10)
+        const hashedPassword = await bcrypt.hash(password,10)
 
         const expiryDate = new Date()
         expiryDate.setHours(expiryDate.getHours()+1)
@@ -67,6 +68,7 @@ export async function POST(request:Request){
 
     } catch (error) {
         console.log("Error registering user")  
+        console.log(error)
         return Response.json({
             success:false,
             message:"Couldn't register user"

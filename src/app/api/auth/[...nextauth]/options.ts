@@ -4,8 +4,7 @@ import { NextAuthOptions } from "next-auth";
 import User from "@/models/userModel";
 import bcrypt from 'bcryptjs';
 
-
-const authOptions:NextAuthOptions = {
+export const authOptions:NextAuthOptions = {
     providers:[
         CredentialsProvider({
             id:'credentials',
@@ -48,10 +47,30 @@ const authOptions:NextAuthOptions = {
         })
     ],
     pages:{
-        signIn:'/api/sign-in'
+        signIn:'/sign-in'
     },
     session:{
         strategy:"jwt"
+    },
+    callbacks:{
+        jwt:({token,user})=>{
+            if(user){
+                token._id = user._id?.toString()
+                token.isAcceptingMessages = user.isAcceptingMessages
+                token.isVerified = user.isVerified
+                token.username = user.username
+            }
+            return token
+        },
+        session:({token,session})=>{
+            if(token){
+                session.user._id = token._id
+                session.user.isAcceptingMessages = token.isAcceptingMessages
+                session.user.isVerified = token.isVerified
+                session.user.username = token.username
+            }
+            return session
+        }
     },
     secret:process.env.NEXTAUTH_SECRET
 }

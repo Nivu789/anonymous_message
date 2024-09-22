@@ -19,6 +19,7 @@ export default async function dbConnect(){
             console.log("Database Connected")
         }
     } catch (error) {
+        console.log(error)
         console.log("Database connection failed")
     }
 }
